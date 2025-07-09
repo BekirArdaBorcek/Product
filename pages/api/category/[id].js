@@ -21,7 +21,6 @@ export default async function handler(req, res) {
       const category = await Category.findById(id);
       if (!category)
         return res.status(404).json({ error: "Kategori bulunamadı." });
-      // O kategoriye ait ürünleri getir
       const products = await Product.find({ category: id });
       res.status(200).json({
         ...category.toObject(),

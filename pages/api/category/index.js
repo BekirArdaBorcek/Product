@@ -6,7 +6,6 @@ export async function GET(req, res) {
   await DBConnect();
   try {
     const categories = await Category.find();
-    // Her kategori için ilgili ürünleri ekle
     const categoriesWithProducts = await Promise.all(
       categories.map(async (category) => {
         const products = await Product.find({ category: category._id });
