@@ -5,11 +5,11 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**", // Tüm hostname'lere izin ver
+        hostname: "**",
       },
       {
         protocol: "http",
-        hostname: "**", // HTTP için de izin ver
+        hostname: "**",
       },
     ],
   },
