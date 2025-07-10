@@ -6,7 +6,7 @@ import User from "../../../model/UserModel";
 import DBConnect from "../../../lib/database";
 import bcrypt from "bcryptjs";
 
-export default NextAuth({
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_ID,
@@ -102,4 +102,12 @@ export default NextAuth({
       return session;
     },
   },
-});
+  secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: "/api/auth/signin",
+    signUp: "/api/auth/register",
+    error: "/api/auth/error",
+  },
+};
+
+export default NextAuth(authOptions);
