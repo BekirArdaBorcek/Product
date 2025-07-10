@@ -17,7 +17,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Bu email zaten kayıtlı." });
 
   const hashed = await bcrypt.hash(password, 10);
-  const user = new User({ email, password: hashed, name });
+  const user = new User({
+    email,
+    password: hashed,
+    name,
+    provider: "credentials",
+  });
   await user.save();
 
   res.status(201).json({
