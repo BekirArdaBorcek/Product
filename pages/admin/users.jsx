@@ -156,7 +156,7 @@ export default function AdminPanel() {
                 fontWeight: "700",
               }}
             >
-              👑 Admin Panel
+              Admin Panel
             </h1>
             <p
               style={{
@@ -180,7 +180,7 @@ export default function AdminPanel() {
                 fontWeight: "600",
               }}
             >
-              🏠 Ana Sayfaya Dön
+              Ana Sayfaya Dön
             </button>
           </Link>
         </div>
@@ -587,7 +587,7 @@ export default function AdminPanel() {
                             gap: "5px",
                           }}
                         >
-                          📂 {user.categoryCount || 0}
+                          {user.categoryCount || 0}
                         </span>
                       </td>
                       <td
@@ -610,7 +610,7 @@ export default function AdminPanel() {
                             gap: "5px",
                           }}
                         >
-                          📦 {user.productCount || 0}
+                          {user.productCount || 0}
                         </span>
                       </td>
                       <td
@@ -674,7 +674,7 @@ export default function AdminPanel() {
                               e.target.style.boxShadow = "none";
                             }}
                           >
-                            🗑️ Sil
+                            Sil
                           </button>
                         ) : (
                           <span

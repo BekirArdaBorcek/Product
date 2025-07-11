@@ -40,7 +40,6 @@ export default function SignUp() {
       if (response.ok) {
         setSuccess("Kayıt başarılı! Giriş yapılıyor...");
 
-        // Kayıt başarılı, otomatik giriş yap
         setTimeout(async () => {
           const result = await signIn("credentials", {
             email,

@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     password: hashed,
     name,
     provider: "credentials",
-    role: "user", // Yeni kullanıcılar varsayılan olarak "user" rolü alır
+    role: "user",
   });
   await user.save();
 

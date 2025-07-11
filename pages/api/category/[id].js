@@ -8,7 +8,6 @@ export default async function handler(req, res) {
   await DBConnect();
   const { id } = req.query;
 
-  // Get user session
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user) {
     return res.status(401).json({ error: "Giriş yapmalısınız" });
@@ -16,7 +15,6 @@ export default async function handler(req, res) {
 
   if (req.method === "DELETE") {
     try {
-      // Check if category belongs to user
       const category = await Category.findOne({
         _id: id,
         userId: session.user.id,
@@ -35,7 +33,6 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "GET") {
     try {
-      // Check if category belongs to user
       const category = await Category.findOne({
         _id: id,
         userId: session.user.id,
@@ -60,7 +57,6 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "PUT") {
     try {
-      // Check if category belongs to user
       const category = await Category.findOne({
         _id: id,
         userId: session.user.id,

@@ -13,14 +13,12 @@ export default async function handler(req, res) {
 
   await DBConnect();
 
-  // Get user session and check if admin
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user || session.user.role !== "admin") {
     return res.status(401).json({ error: "Admin yetkisi gerekli" });
   }
 
   try {
-    // Get all users with their category and product counts
     const users = await User.find({}, { password: 0 });
 
     const usersWithStats = await Promise.all(

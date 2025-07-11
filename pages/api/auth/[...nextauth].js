@@ -74,8 +74,8 @@ export const authOptions = {
               email: user.email,
               provider: account.provider,
               providerId: account.providerAccountId,
-              role: "user", // Yeni kullanıcılar varsayılan olarak "user" rolü alır
-              isApproved: false, // OAuth kullanıcıları da onay bekler
+              role: "user",
+              isApproved: false,
             });
           }
 
@@ -97,7 +97,6 @@ export const authOptions = {
         token.role = user.role;
       }
 
-      // Eğer token'da role yoksa veritabanından çek
       if (!token.role && token.id) {
         try {
           await DBConnect();

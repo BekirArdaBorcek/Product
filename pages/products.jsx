@@ -166,7 +166,7 @@ export default function Products() {
   }
 
   if (!session) {
-    return null; // Redirect will happen in useEffect
+    return null;
   }
 
   if (error) return <div className={styles.error}>Hata: {error}</div>;

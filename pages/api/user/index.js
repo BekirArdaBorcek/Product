@@ -6,7 +6,6 @@ export default async function handler(req, res) {
   await DBConnect();
 
   if (req.method === "GET") {
-    // Admin kontrolü
     const authResult = await requireAdmin(req);
     if (authResult.error) {
       return res.status(authResult.status).json({ error: authResult.message });
@@ -26,7 +25,6 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PUT") {
-    // Admin kontrolü
     const authResult = await requireAdmin(req);
     if (authResult.error) {
       return res.status(authResult.status).json({ error: authResult.message });
@@ -53,7 +51,6 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "Kullanıcı bulunamadı." });
       }
 
-      // Kendi rolünü değiştirmeye çalışıyor mu?
       if (authResult.user.id === userId) {
         return res
           .status(400)
@@ -81,7 +78,6 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "DELETE") {
-    // Admin kontrolü
     const authResult = await requireAdmin(req);
     if (authResult.error) {
       return res.status(authResult.status).json({ error: authResult.message });
@@ -94,7 +90,6 @@ export default async function handler(req, res) {
     }
 
     try {
-      // Kendi hesabını silmeye çalışıyor mu?
       if (authResult.user.id === userId) {
         return res
           .status(400)

@@ -1,6 +1,5 @@
 import { getToken } from "next-auth/jwt";
 
-// Kullanıcının oturum açmış olup olmadığını kontrol eder
 export async function requireAuth(req) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
@@ -18,7 +17,6 @@ export async function requireAuth(req) {
   };
 }
 
-// Kullanıcının admin olup olmadığını kontrol eder
 export async function requireAdmin(req) {
   const authResult = await requireAuth(req);
 
@@ -40,7 +38,6 @@ export async function requireAdmin(req) {
   };
 }
 
-// Kullanıcının kendi verisine erişmek istediğini veya admin olduğunu kontrol eder
 export async function requireOwnershipOrAdmin(req, userId) {
   const authResult = await requireAuth(req);
 

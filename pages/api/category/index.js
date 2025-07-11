@@ -8,14 +8,12 @@ import { authOptions } from "../auth/[...nextauth]";
 export async function GET(req, res) {
   await DBConnect();
 
-  // Get user session
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user) {
     return res.status(401).json({ error: "Giriş yapmalısınız" });
   }
 
   try {
-    // Only get categories for the current user
     const categories = await Category.find({ userId: session.user.id });
     const categoriesWithProducts = await Promise.all(
       categories.map(async (category) => {
@@ -36,14 +34,12 @@ export async function GET(req, res) {
 export async function POST(req, res) {
   await DBConnect();
 
-  // Get user session
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user) {
     return res.status(401).json({ error: "Giriş yapmalısınız" });
   }
 
   try {
-    // Add userId to category data
     const categoryData = {
       ...req.body,
       userId: session.user.id,

@@ -43,7 +43,7 @@ export default function Home() {
                     fontWeight: "600",
                   }}
                 >
-                  Hoş geldiniz, {session.user?.name || session.user?.email}! 👋
+                  Hoş geldiniz, {session.user?.name || session.user?.email}!
                   {session.user?.role === "admin" && (
                     <span
                       style={{
@@ -55,7 +55,7 @@ export default function Home() {
                         fontSize: "0.8rem",
                       }}
                     >
-                      👑 Admin
+                      Admin
                     </span>
                   )}
                 </p>
@@ -118,7 +118,7 @@ export default function Home() {
                       fontWeight: "700",
                     }}
                   >
-                    Hoş Geldiniz! 🚀
+                    Hoş Geldiniz!
                   </h2>
                   <p
                     style={{
@@ -214,7 +214,7 @@ export default function Home() {
             </Link>
             {session.user?.role === "admin" && (
               <Link href="/admin/users" className={styles.mainButton}>
-                <h2>👑 Admin Panel</h2>
+                <h2> Admin Panel</h2>
                 <p>Kullanıcıları yönet</p>
               </Link>
             )}

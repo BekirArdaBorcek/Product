@@ -8,14 +8,12 @@ import { authOptions } from "../auth/[...nextauth]";
 export async function GET(req, res) {
   await DBConnect();
 
-  // Get user session
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user) {
     return res.status(401).json({ error: "Giriş yapmalısınız" });
   }
 
   try {
-    // Only get products for the current user
     const products = await Product.find({ userId: session.user.id }).populate(
       "category"
     );
@@ -29,14 +27,12 @@ export async function GET(req, res) {
 export async function POST(req, res) {
   await DBConnect();
 
-  // Get user session
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user) {
     return res.status(401).json({ error: "Giriş yapmalısınız" });
   }
 
   try {
-    // Verify that the category belongs to the user
     const category = await Category.findOne({
       _id: req.body.category,
       userId: session.user.id,
@@ -48,7 +44,6 @@ export async function POST(req, res) {
         .json({ error: "Bu kategoriye ürün ekleyemezsiniz" });
     }
 
-    // Add userId to product data
     const productData = {
       ...req.body,
       userId: session.user.id,

@@ -8,7 +8,6 @@ export default async function handler(req, res) {
   await DBConnect();
   const { id } = req.query;
 
-  // Get user session
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user) {
     return res.status(401).json({ error: "Giriş yapmalısınız" });
@@ -16,7 +15,6 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      // Check if product belongs to user
       const product = await Product.findOne({
         _id: id,
         userId: session.user.id,
@@ -33,7 +31,6 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "PUT") {
     try {
-      // Check if product belongs to user
       const product = await Product.findOne({
         _id: id,
         userId: session.user.id,
@@ -44,7 +41,6 @@ export default async function handler(req, res) {
           .json({ error: "Ürün bulunamadı veya size ait değil." });
       }
 
-      // If category is being updated, verify it belongs to user
       if (req.body.category) {
         const category = await Category.findOne({
           _id: req.body.category,
@@ -68,7 +64,6 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "DELETE") {
     try {
-      // Check if product belongs to user
       const product = await Product.findOne({
         _id: id,
         userId: session.user.id,

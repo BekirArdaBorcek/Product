@@ -8,7 +8,6 @@ export default async function handler(req, res) {
   const { id } = req.query;
 
   if (req.method === "GET") {
-    // Kendi bilgisine erişiyor veya admin mi kontrol et
     const authResult = await requireOwnershipOrAdmin(req, id);
     if (authResult.error) {
       return res.status(authResult.status).json({ error: authResult.message });
@@ -33,7 +32,6 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PUT") {
-    // Kendi bilgisine erişiyor veya admin mi kontrol et
     const authResult = await requireOwnershipOrAdmin(req, id);
     if (authResult.error) {
       return res.status(authResult.status).json({ error: authResult.message });
@@ -48,7 +46,6 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "Kullanıcı bulunamadı." });
       }
 
-      // Email güncelleniyorsa, başka kullanıcıda aynı email var mı kontrol et
       if (email && email !== user.email) {
         const existingUser = await User.findOne({ email, _id: { $ne: id } });
         if (existingUser) {
@@ -82,13 +79,11 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "DELETE") {
-    // Kendi hesabını silmeye çalışıyor veya admin mi kontrol et
     const authResult = await requireOwnershipOrAdmin(req, id);
     if (authResult.error) {
       return res.status(authResult.status).json({ error: authResult.message });
     }
 
-    // Kendi hesabını silmeye çalışıyor mu?
     if (authResult.user.id === id) {
       return res.status(400).json({ error: "Kendi hesabınızı silemezsiniz." });
     }
