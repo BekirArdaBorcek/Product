@@ -5,11 +5,15 @@ const CategorySchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       minlength: 2,
       maxlength: 50,
       match: [/^[a-zA-ZğüşöçıİĞÜŞÖÇ\s]+$/, "Sadece harf ve boşluk olmalı"],
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     description: {
       type: String,

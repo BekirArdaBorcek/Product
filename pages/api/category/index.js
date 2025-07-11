@@ -1,14 +1,28 @@
 import DBConnect from "../../../lib/database";
 import Category from "../../../model/CategoryModel";
 import Product from "../../../model/ProductModel";
+import User from "../../../model/UserModel";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
 
 export async function GET(req, res) {
   await DBConnect();
+
+  // Get user session
+  const session = await getServerSession(req, res, authOptions);
+  if (!session || !session.user) {
+    return res.status(401).json({ error: "Giriş yapmalısınız" });
+  }
+
   try {
-    const categories = await Category.find();
+    // Only get categories for the current user
+    const categories = await Category.find({ userId: session.user.id });
     const categoriesWithProducts = await Promise.all(
       categories.map(async (category) => {
-        const products = await Product.find({ category: category._id });
+        const products = await Product.find({
+          category: category._id,
+          userId: session.user.id,
+        });
         return { ...category.toObject(), products };
       })
     );
@@ -21,8 +35,21 @@ export async function GET(req, res) {
 
 export async function POST(req, res) {
   await DBConnect();
+
+  // Get user session
+  const session = await getServerSession(req, res, authOptions);
+  if (!session || !session.user) {
+    return res.status(401).json({ error: "Giriş yapmalısınız" });
+  }
+
   try {
-    const category = new Category(req.body);
+    // Add userId to category data
+    const categoryData = {
+      ...req.body,
+      userId: session.user.id,
+    };
+
+    const category = new Category(categoryData);
     await category.save();
     res.status(201).json(category);
   } catch (error) {

@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,6 +8,8 @@ import axios from "axios";
 import styles from "@/styles/Main.module.css";
 
 export default function Categories() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,8 +22,15 @@ export default function Categories() {
   });
 
   useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session) {
+      router.push("/auth/signin");
+      return;
+    }
+
     fetchCategories();
-  }, []);
+  }, [session, status, router]);
 
   const fetchCategories = async () => {
     try {
@@ -27,9 +38,14 @@ export default function Categories() {
       const response = await axios.get("/api/category");
       setCategories(response.data);
     } catch (err) {
-      setError(
-        err.response?.data?.error || "Kategoriler yüklenirken hata oluştu"
-      );
+      // 403 hatası için özel mesaj
+      if (err.response?.status === 403) {
+        setError("Hesabınız henüz onaylanmamış. Kategori işlemleri için admin onayı bekleniyor.");
+      } else {
+        setError(
+          err.response?.data?.error || "Kategoriler yüklenirken hata oluştu"
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -67,7 +83,12 @@ export default function Categories() {
       resetForm();
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.error || "İşlem sırasında hata oluştu");
+      // 403 hatası için özel mesaj
+      if (err.response?.status === 403) {
+        setError("Hesabınız henüz onaylanmamış. Kategori oluşturmak için admin onayı gerekli.");
+      } else {
+        setError(err.response?.data?.error || "İşlem sırasında hata oluştu");
+      }
     }
   };
 
@@ -106,7 +127,14 @@ export default function Categories() {
     });
   };
 
-  if (loading) return <div className={styles.loading}>Yükleniyor...</div>;
+  if (status === "loading" || loading) {
+    return <div className={styles.loading}>Yükleniyor...</div>;
+  }
+
+  if (!session) {
+    return null; // Redirect will happen in useEffect
+  }
+
   if (error) return <div className={styles.error}>Hata: {error}</div>;
 
   return (

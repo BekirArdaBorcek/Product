@@ -44,34 +44,57 @@ export default function Home() {
                   }}
                 >
                   Hoş geldiniz, {session.user?.name || session.user?.email}! 👋
+                  {session.user?.role === "admin" && (
+                    <span
+                      style={{
+                        marginLeft: "10px",
+                        padding: "4px 8px",
+                        backgroundColor: "#28a745",
+                        color: "white",
+                        borderRadius: "4px",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      👑 Admin
+                    </span>
+                  )}
                 </p>
-                <button
-                  onClick={() => signOut()}
+                <div
                   style={{
-                    padding: "12px 24px",
-                    backgroundColor: "#dc3545",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "12px",
-                    cursor: "pointer",
-                    fontSize: "1rem",
-                    fontWeight: "600",
-                    transition: "all 0.3s ease",
-                    boxShadow: "0 4px 15px rgba(220, 53, 69, 0.3)",
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.transform = "translateY(-2px)";
-                    e.target.style.boxShadow =
-                      "0 6px 20px rgba(220, 53, 69, 0.4)";
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.transform = "translateY(0)";
-                    e.target.style.boxShadow =
-                      "0 4px 15px rgba(220, 53, 69, 0.3)";
+                    display: "flex",
+                    gap: "10px",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
                   }}
                 >
-                  Çıkış Yap
-                </button>
+                  <button
+                    onClick={() => signOut()}
+                    style={{
+                      padding: "12px 24px",
+                      backgroundColor: "#dc3545",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "12px",
+                      cursor: "pointer",
+                      fontSize: "1rem",
+                      fontWeight: "600",
+                      transition: "all 0.3s ease",
+                      boxShadow: "0 4px 15px rgba(220, 53, 69, 0.3)",
+                    }}
+                    onMouseOver={(e) => {
+                      e.target.style.transform = "translateY(-2px)";
+                      e.target.style.boxShadow =
+                        "0 6px 20px rgba(220, 53, 69, 0.4)";
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.transform = "translateY(0)";
+                      e.target.style.boxShadow =
+                        "0 4px 15px rgba(220, 53, 69, 0.3)";
+                    }}
+                  >
+                    Çıkış Yap
+                  </button>
+                </div>
               </div>
             ) : (
               <div
@@ -189,6 +212,12 @@ export default function Home() {
               <h2>Ürün Yönetimi</h2>
               <p>Ürünleri yönet</p>
             </Link>
+            {session.user?.role === "admin" && (
+              <Link href="/admin/users" className={styles.mainButton}>
+                <h2>👑 Admin Panel</h2>
+                <p>Kullanıcıları yönet</p>
+              </Link>
+            )}
           </div>
         )}
       </div>

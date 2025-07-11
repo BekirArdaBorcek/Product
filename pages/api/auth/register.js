@@ -22,11 +22,12 @@ export default async function handler(req, res) {
     password: hashed,
     name,
     provider: "credentials",
+    role: "user", // Yeni kullanıcılar varsayılan olarak "user" rolü alır
   });
   await user.save();
 
   res.status(201).json({
-    message: "Kayıt başarılı.",
+    message: "Kayıt başarılı! Giriş yapabilirsiniz.",
     user: { email: user.email, name: user.name },
   });
 }

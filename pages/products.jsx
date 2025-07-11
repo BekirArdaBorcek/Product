@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,6 +8,7 @@ import axios from "axios";
 import styles from "@/styles/Main.module.css";
 
 export default function Products() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const { category } = router.query;
 
@@ -26,9 +28,16 @@ export default function Products() {
   });
 
   useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session) {
+      router.push("/auth/signin");
+      return;
+    }
+
     fetchProducts();
     fetchCategories();
-  }, []);
+  }, [session, status, router]);
 
   useEffect(() => {
     if (category) {
@@ -152,7 +161,14 @@ export default function Products() {
     }).format(price);
   };
 
-  if (loading) return <div className={styles.loading}>Yükleniyor...</div>;
+  if (status === "loading" || loading) {
+    return <div className={styles.loading}>Yükleniyor...</div>;
+  }
+
+  if (!session) {
+    return null; // Redirect will happen in useEffect
+  }
+
   if (error) return <div className={styles.error}>Hata: {error}</div>;
 
   return (

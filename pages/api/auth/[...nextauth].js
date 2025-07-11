@@ -48,6 +48,7 @@ export const authOptions = {
             id: user._id.toString(),
             email: user.email,
             name: user.name,
+            role: user.role,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -73,10 +74,13 @@ export const authOptions = {
               email: user.email,
               provider: account.provider,
               providerId: account.providerAccountId,
+              role: "user", // Yeni kullanıcılar varsayılan olarak "user" rolü alır
+              isApproved: false, // OAuth kullanıcıları da onay bekler
             });
           }
 
           user.id = existingUser._id.toString();
+          user.role = existingUser.role;
           return true;
         } catch (error) {
           console.error("SignIn callback error:", error);
@@ -90,7 +94,22 @@ export const authOptions = {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
+        token.role = user.role;
       }
+
+      // Eğer token'da role yoksa veritabanından çek
+      if (!token.role && token.id) {
+        try {
+          await DBConnect();
+          const dbUser = await User.findById(token.id);
+          if (dbUser) {
+            token.role = dbUser.role;
+          }
+        } catch (error) {
+          console.error("JWT callback error:", error);
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -98,6 +117,7 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.email = token.email;
         session.user.name = token.name;
+        session.user.role = token.role;
       }
       return session;
     },

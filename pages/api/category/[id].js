@@ -1,16 +1,33 @@
 import DBConnect from "../../../lib/database";
 import Category from "../../../model/CategoryModel";
 import Product from "../../../model/ProductModel";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(req, res) {
   await DBConnect();
   const { id } = req.query;
 
+  // Get user session
+  const session = await getServerSession(req, res, authOptions);
+  if (!session || !session.user) {
+    return res.status(401).json({ error: "Giriş yapmalısınız" });
+  }
+
   if (req.method === "DELETE") {
     try {
+      // Check if category belongs to user
+      const category = await Category.findOne({
+        _id: id,
+        userId: session.user.id,
+      });
+      if (!category) {
+        return res
+          .status(404)
+          .json({ error: "Kategori bulunamadı veya size ait değil." });
+      }
+
       const deleted = await Category.findByIdAndDelete(id);
-      if (!deleted)
-        return res.status(404).json({ error: "Kategori bulunamadı." });
       res.status(200).json({ message: "Kategori silindi." });
     } catch (error) {
       console.error(error);
@@ -18,10 +35,21 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "GET") {
     try {
-      const category = await Category.findById(id);
-      if (!category)
-        return res.status(404).json({ error: "Kategori bulunamadı." });
-      const products = await Product.find({ category: id });
+      // Check if category belongs to user
+      const category = await Category.findOne({
+        _id: id,
+        userId: session.user.id,
+      });
+      if (!category) {
+        return res
+          .status(404)
+          .json({ error: "Kategori bulunamadı veya size ait değil." });
+      }
+
+      const products = await Product.find({
+        category: id,
+        userId: session.user.id,
+      });
       res.status(200).json({
         ...category.toObject(),
         products,
@@ -32,12 +60,21 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "PUT") {
     try {
+      // Check if category belongs to user
+      const category = await Category.findOne({
+        _id: id,
+        userId: session.user.id,
+      });
+      if (!category) {
+        return res
+          .status(404)
+          .json({ error: "Kategori bulunamadı veya size ait değil." });
+      }
+
       const updateData = req.body;
       const updated = await Category.findByIdAndUpdate(id, updateData, {
         new: true,
       });
-      if (!updated)
-        return res.status(404).json({ error: "Kategori bulunamadı." });
       res.status(200).json(updated);
     } catch (error) {
       console.error(error);
