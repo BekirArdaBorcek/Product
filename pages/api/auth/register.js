@@ -16,18 +16,27 @@ export default async function handler(req, res) {
   if (existing)
     return res.status(400).json({ error: "Bu email zaten kayıtlı." });
 
+  const userCount = await User.countDocuments();
+  const isFirstUser = userCount === 0;
+
   const hashed = await bcrypt.hash(password, 10);
   const user = new User({
     email,
     password: hashed,
     name,
     provider: "credentials",
-    role: "user",
+    role: isFirstUser ? "admin" : "user",
+    isApproved: isFirstUser ? true : false,
   });
   await user.save();
 
+  const message = isFirstUser
+    ? "İlk admin hesabı başarıyla oluşturuldu! Giriş yapabilirsiniz."
+    : "Kayıt başarılı! Hesabınız admin onayı bekliyor. Onay aldıktan sonra giriş yapabilirsiniz.";
+
   res.status(201).json({
-    message: "Kayıt başarılı! Giriş yapabilirsiniz.",
+    message,
     user: { email: user.email, name: user.name },
+    requiresApproval: !isFirstUser,
   });
 }

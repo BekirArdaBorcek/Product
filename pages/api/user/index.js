@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     try {
       const users = await User.find(
         {},
-        "email name role provider createdAt updatedAt"
+        "email name role provider isApproved createdAt updatedAt"
       );
       res.status(200).json(users);
     } catch (error) {
@@ -30,18 +30,22 @@ export default async function handler(req, res) {
       return res.status(authResult.status).json({ error: authResult.message });
     }
 
-    const { userId, role } = req.body;
+    const { userId, role, isApproved } = req.body;
 
-    if (!userId || !role) {
-      return res
-        .status(400)
-        .json({ error: "Kullanıcı ID'si ve rol gereklidir." });
+    if (!userId) {
+      return res.status(400).json({ error: "Kullanıcı ID'si gereklidir." });
     }
 
-    if (!["user", "admin"].includes(role)) {
+    if (role && !["user", "admin"].includes(role)) {
       return res
         .status(400)
         .json({ error: "Geçersiz rol. Sadece 'user' veya 'admin' olabilir." });
+    }
+
+    if (isApproved !== undefined && typeof isApproved !== "boolean") {
+      return res
+        .status(400)
+        .json({ error: "Onay durumu boolean değer olmalıdır." });
     }
 
     try {
@@ -57,17 +61,24 @@ export default async function handler(req, res) {
           .json({ error: "Kendi rolünüzü değiştiremezsiniz." });
       }
 
-      user.role = role;
+      if (role) {
+        user.role = role;
+      }
+
+      if (isApproved !== undefined) {
+        user.isApproved = isApproved;
+      }
 
       await user.save();
 
       res.status(200).json({
-        message: "Kullanıcı rolü başarıyla güncellendi.",
+        message: "Kullanıcı bilgileri başarıyla güncellendi.",
         user: {
           id: user._id,
           email: user.email,
           name: user.name,
           role: user.role,
+          isApproved: user.isApproved,
         },
       });
     } catch (error) {

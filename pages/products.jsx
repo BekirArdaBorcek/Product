@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import axios from "axios";
 import styles from "@/styles/Main.module.css";
+import { useAuthRedirect } from "../middleware/auth";
 
 export default function Products() {
   const { data: session, status } = useSession();
@@ -28,12 +29,8 @@ export default function Products() {
   });
 
   useEffect(() => {
-    if (status === "loading") return;
-
-    if (!session) {
-      router.push("/auth/signin");
-      return;
-    }
+    const authCheck = useAuthRedirect(session, status, router);
+    if (authCheck.loading || authCheck.redirect) return;
 
     fetchProducts();
     fetchCategories();

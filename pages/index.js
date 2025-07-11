@@ -58,7 +58,47 @@ export default function Home() {
                       Admin
                     </span>
                   )}
+                  {session.user?.role !== "admin" &&
+                    !session.user?.isApproved && (
+                      <span
+                        style={{
+                          marginLeft: "10px",
+                          padding: "4px 8px",
+                          backgroundColor: "#ffc107",
+                          color: "#212529",
+                          borderRadius: "4px",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        Onay Bekliyor
+                      </span>
+                    )}
                 </p>
+
+                {session.user?.role !== "admin" &&
+                  !session.user?.isApproved && (
+                    <div
+                      style={{
+                        backgroundColor: "#fff3cd",
+                        border: "1px solid #ffeeba",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        marginBottom: "15px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <p
+                        style={{
+                          margin: 0,
+                          color: "#856404",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        Hesabınız henüz onaylanmamış. Ürün ve kategori işlemleri
+                        için admin onayı bekleniyor.
+                      </p>
+                    </div>
+                  )}
                 <div
                   style={{
                     display: "flex",
@@ -204,19 +244,39 @@ export default function Home() {
 
         {session && (
           <div className={styles.mainActions}>
-            <Link href="/categories" className={styles.mainButton}>
-              <h2>Kategori Yönetimi</h2>
-              <p>Kategorileri yönet</p>
-            </Link>
-            <Link href="/products" className={styles.mainButton}>
-              <h2>Ürün Yönetimi</h2>
-              <p>Ürünleri yönet</p>
-            </Link>
+            {(session.user?.role === "admin" || session.user?.isApproved) && (
+              <>
+                <Link href="/categories" className={styles.mainButton}>
+                  <h2>Kategori Yönetimi</h2>
+                  <p>Kategorileri yönet</p>
+                </Link>
+                <Link href="/products" className={styles.mainButton}>
+                  <h2>Ürün Yönetimi</h2>
+                  <p>Ürünleri yönet</p>
+                </Link>
+              </>
+            )}
             {session.user?.role === "admin" && (
               <Link href="/admin/users" className={styles.mainButton}>
                 <h2> Admin Panel</h2>
                 <p>Kullanıcıları yönet</p>
               </Link>
+            )}
+            {session.user?.role !== "admin" && !session.user?.isApproved && (
+              <div
+                className={styles.mainButton}
+                style={{
+                  backgroundColor: "#f8f9fa",
+                  border: "2px dashed #dee2e6",
+                  cursor: "default",
+                  opacity: 0.7,
+                }}
+              >
+                <h2 style={{ color: "#6c757d" }}>Onay Bekleniyor</h2>
+                <p style={{ color: "#6c757d" }}>
+                  Admin onayı sonrası erişebileceksiniz
+                </p>
+              </div>
             )}
           </div>
         )}

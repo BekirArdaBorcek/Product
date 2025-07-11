@@ -49,6 +49,7 @@ export const authOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
+            isApproved: user.isApproved,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -69,18 +70,23 @@ export const authOptions = {
           let existingUser = await User.findOne({ email: user.email });
 
           if (!existingUser) {
+            // İlk kullanıcıyı kontrol et (admin olarak ayarla)
+            const userCount = await User.countDocuments();
+            const isFirstUser = userCount === 0;
+
             existingUser = await User.create({
               name: user.name,
               email: user.email,
               provider: account.provider,
               providerId: account.providerAccountId,
-              role: "user",
-              isApproved: false,
+              role: isFirstUser ? "admin" : "user",
+              isApproved: isFirstUser ? true : false,
             });
           }
 
           user.id = existingUser._id.toString();
           user.role = existingUser.role;
+          user.isApproved = existingUser.isApproved;
           return true;
         } catch (error) {
           console.error("SignIn callback error:", error);
@@ -95,14 +101,16 @@ export const authOptions = {
         token.email = user.email;
         token.name = user.name;
         token.role = user.role;
+        token.isApproved = user.isApproved;
       }
 
-      if (!token.role && token.id) {
+      if ((!token.role || token.isApproved === undefined) && token.id) {
         try {
           await DBConnect();
           const dbUser = await User.findById(token.id);
           if (dbUser) {
             token.role = dbUser.role;
+            token.isApproved = dbUser.isApproved;
           }
         } catch (error) {
           console.error("JWT callback error:", error);
@@ -117,6 +125,7 @@ export const authOptions = {
         session.user.email = token.email;
         session.user.name = token.name;
         session.user.role = token.role;
+        session.user.isApproved = token.isApproved;
       }
       return session;
     },

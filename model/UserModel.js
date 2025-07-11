@@ -9,9 +9,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
-    }, // Kullanıcı rolü
+    },
     provider: { type: String, default: "credentials" },
     providerId: { type: String },
+    isApproved: { type: Boolean, default: false },
   },
   {
     timestamps: true,

@@ -1,8 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
+import { useAuthRedirect } from "../../middleware/auth";
+
+// Utility fonksiyonlar
+const getProviderDisplay = (provider) => {
+  const providers = {
+    google: "Google",
+    github: "GitHub",
+    credentials: "Email",
+  };
+  return providers[provider] || provider;
+};
+
+const getProviderColor = (provider) => {
+  const colors = {
+    google: "#ea4335",
+    github: "#333",
+    credentials: "#007bff",
+  };
+  return colors[provider] || "#007bff";
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return {
+    date: date.toLocaleDateString("tr-TR"),
+    time: date.toLocaleTimeString("tr-TR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+};
 
 export default function AdminPanel() {
   const { data: session, status } = useSession();
@@ -13,12 +44,8 @@ export default function AdminPanel() {
   const [updating, setUpdating] = useState(null);
 
   useEffect(() => {
-    if (status === "loading") return;
-
-    if (!session) {
-      router.push("/auth/signin");
-      return;
-    }
+    const authCheck = useAuthRedirect(session, status, router, false); // Admin sayfası için onay kontrolü yok
+    if (authCheck.loading || authCheck.redirect) return;
 
     if (session.user.role !== "admin") {
       router.push("/");
@@ -45,28 +72,21 @@ export default function AdminPanel() {
     }
   };
 
-  const updateUserRole = async (userId, newRole) => {
+  const updateUserRole = useCallback(async (userId, newRole) => {
     setUpdating(userId);
     try {
       const response = await fetch("/api/user", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, role: newRole }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setUsers(
-          users.map((user) =>
-            user._id === userId
-              ? {
-                  ...user,
-                  role: newRole,
-                }
-              : user
+        setUsers((prev) =>
+          prev.map((user) =>
+            user._id === userId ? { ...user, role: newRole } : user
           )
         );
       } else {
@@ -77,7 +97,34 @@ export default function AdminPanel() {
     } finally {
       setUpdating(null);
     }
-  };
+  }, []);
+
+  const updateUserApproval = useCallback(async (userId, isApproved) => {
+    setUpdating(userId);
+    try {
+      const response = await fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, isApproved }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUsers((prev) =>
+          prev.map((user) =>
+            user._id === userId ? { ...user, isApproved } : user
+          )
+        );
+      } else {
+        setError(data.error || "Onay durumu güncellenirken hata oluştu");
+      }
+    } catch (error) {
+      setError("Bir hata oluştu");
+    } finally {
+      setUpdating(null);
+    }
+  }, []);
 
   const deleteUser = async (userId) => {
     if (!confirm("Bu kullanıcıyı silmek istediğinizden emin misiniz?")) {
@@ -222,7 +269,7 @@ export default function AdminPanel() {
                 justifyContent: "center",
               }}
             >
-              {" "}
+              ×
             </button>
           </div>
         )}
@@ -343,6 +390,17 @@ export default function AdminPanel() {
                       }}
                     >
                       Rol
+                    </th>
+                    <th
+                      style={{
+                        padding: "18px 15px",
+                        textAlign: "left",
+                        fontWeight: "600",
+                        fontSize: "0.9rem",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      Onay Durumu
                     </th>
                     <th
                       style={{
@@ -519,8 +577,64 @@ export default function AdminPanel() {
                             minWidth: "100px",
                           }}
                         >
-                          <option value="user"> User</option>
-                          <option value="admin"> Admin</option>
+                          <option value="user">User</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        {updating === user._id && (
+                          <div
+                            style={{
+                              display: "inline-block",
+                              marginLeft: "8px",
+                              width: "16px",
+                              height: "16px",
+                              border: "2px solid #f3f3f3",
+                              borderTop: "2px solid #667eea",
+                              borderRadius: "50%",
+                              animation: "spin 1s linear infinite",
+                            }}
+                          />
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          padding: "18px 15px",
+                          borderRight: "1px solid #f0f0f0",
+                        }}
+                      >
+                        <select
+                          value={user.isApproved ? "approved" : "pending"}
+                          onChange={(e) =>
+                            updateUserApproval(
+                              user._id,
+                              e.target.value === "approved"
+                            )
+                          }
+                          disabled={
+                            updating === user._id ||
+                            user._id === session.user.id ||
+                            user.role === "admin"
+                          }
+                          style={{
+                            padding: "8px 12px",
+                            border: "2px solid #e9ecef",
+                            borderRadius: "8px",
+                            backgroundColor: user.isApproved
+                              ? "#d4edda"
+                              : "#fff3cd",
+                            color: user.isApproved ? "#155724" : "#856404",
+                            fontWeight: "600",
+                            fontSize: "0.85rem",
+                            cursor:
+                              user._id === session.user.id ||
+                              user.role === "admin"
+                                ? "not-allowed"
+                                : "pointer",
+                            transition: "all 0.3s ease",
+                            minWidth: "120px",
+                          }}
+                        >
+                          <option value="pending">Onay Bekliyor</option>
+                          <option value="approved">Onaylı</option>
                         </select>
                         {updating === user._id && (
                           <div
@@ -549,22 +663,11 @@ export default function AdminPanel() {
                             borderRadius: "20px",
                             fontSize: "0.8rem",
                             fontWeight: "600",
-                            backgroundColor:
-                              user.provider === "google"
-                                ? "#ea4335"
-                                : user.provider === "github"
-                                ? "#333"
-                                : "#007bff",
+                            backgroundColor: getProviderColor(user.provider),
                             color: "white",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
                           }}
                         >
-                          {user.provider === "google"}
-                          {user.provider === "github"}
-                          {user.provider === "credentials"}
-                          {user.provider}
+                          {getProviderDisplay(user.provider)}
                         </span>
                       </td>
                       <td
@@ -582,9 +685,6 @@ export default function AdminPanel() {
                             fontWeight: "600",
                             backgroundColor: "#e3f2fd",
                             color: "#1976d2",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
                           }}
                         >
                           {user.categoryCount || 0}
@@ -605,9 +705,6 @@ export default function AdminPanel() {
                             fontWeight: "600",
                             backgroundColor: "#f3e5f5",
                             color: "#7b1fa2",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
                           }}
                         >
                           {user.productCount || 0}
@@ -621,7 +718,7 @@ export default function AdminPanel() {
                         }}
                       >
                         <div style={{ fontSize: "0.9rem" }}>
-                          {new Date(user.createdAt).toLocaleDateString("tr-TR")}
+                          {formatDate(user.createdAt).date}
                         </div>
                         <div
                           style={{
@@ -630,13 +727,7 @@ export default function AdminPanel() {
                             marginTop: "2px",
                           }}
                         >
-                          {new Date(user.createdAt).toLocaleTimeString(
-                            "tr-TR",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
+                          {formatDate(user.createdAt).time}
                         </div>
                       </td>
                       <td
@@ -658,20 +749,14 @@ export default function AdminPanel() {
                               fontSize: "0.85rem",
                               fontWeight: "600",
                               transition: "all 0.3s ease",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
                             }}
                             onMouseEnter={(e) => {
                               e.target.style.backgroundColor = "#c82333";
                               e.target.style.transform = "translateY(-2px)";
-                              e.target.style.boxShadow =
-                                "0 4px 12px rgba(220, 53, 69, 0.3)";
                             }}
                             onMouseLeave={(e) => {
                               e.target.style.backgroundColor = "#dc3545";
                               e.target.style.transform = "translateY(0)";
-                              e.target.style.boxShadow = "none";
                             }}
                           >
                             Sil
@@ -707,7 +792,9 @@ export default function AdminPanel() {
           }}
         >
           <strong>Not:</strong> Kendi rolünüzü değiştiremez veya kendi
-          hesabınızı silemezsiniz.
+          hesabınızı silemezsiniz. Yeni kullanıcılar varsayılan olarak onaysız
+          olarak kaydolur ve admin onayı bekler. Admin kullanıcıları onay
+          kontrolünden muaftır.
         </div>
       </div>
     </>

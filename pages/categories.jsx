@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
 import styles from "@/styles/Main.module.css";
+import { useAuthRedirect } from "../middleware/auth";
 
 export default function Categories() {
   const { data: session, status } = useSession();
@@ -22,12 +23,8 @@ export default function Categories() {
   });
 
   useEffect(() => {
-    if (status === "loading") return;
-
-    if (!session) {
-      router.push("/auth/signin");
-      return;
-    }
+    const authCheck = useAuthRedirect(session, status, router);
+    if (authCheck.loading || authCheck.redirect) return;
 
     fetchCategories();
   }, [session, status, router]);
@@ -40,7 +37,9 @@ export default function Categories() {
     } catch (err) {
       // 403 hatası için özel mesaj
       if (err.response?.status === 403) {
-        setError("Hesabınız henüz onaylanmamış. Kategori işlemleri için admin onayı bekleniyor.");
+        setError(
+          "Hesabınız henüz onaylanmamış. Kategori işlemleri için admin onayı bekleniyor."
+        );
       } else {
         setError(
           err.response?.data?.error || "Kategoriler yüklenirken hata oluştu"
@@ -85,7 +84,9 @@ export default function Categories() {
     } catch (err) {
       // 403 hatası için özel mesaj
       if (err.response?.status === 403) {
-        setError("Hesabınız henüz onaylanmamış. Kategori oluşturmak için admin onayı gerekli.");
+        setError(
+          "Hesabınız henüz onaylanmamış. Kategori oluşturmak için admin onayı gerekli."
+        );
       } else {
         setError(err.response?.data?.error || "İşlem sırasında hata oluştu");
       }

@@ -11,6 +11,15 @@ export async function requireAuth(req) {
     };
   }
 
+  // Admin kullanıcıları onay kontrolünden muaf tut
+  if (token.role !== "admin" && !token.isApproved) {
+    return {
+      error: true,
+      status: 403,
+      message: "Hesabınız henüz onaylanmamış. Lütfen admin onayını bekleyin.",
+    };
+  }
+
   return {
     error: false,
     user: token,
@@ -62,4 +71,31 @@ export async function requireOwnershipOrAdmin(req, userId) {
     isOwner,
     isAdmin,
   };
+}
+
+// Client-side auth check fonksiyonu (React bileşenlerinde kullanım için)
+export function useAuthRedirect(
+  session,
+  status,
+  router,
+  requireApproval = true
+) {
+  if (status === "loading") return { loading: true };
+
+  if (!session) {
+    router.push("/auth/signin");
+    return { redirect: true };
+  }
+
+  // Admin kullanıcıları onay kontrolünden muaf
+  if (
+    requireApproval &&
+    session.user.role !== "admin" &&
+    !session.user.isApproved
+  ) {
+    router.push("/account-pending");
+    return { redirect: true };
+  }
+
+  return { loading: false, redirect: false };
 }
