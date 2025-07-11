@@ -60,6 +60,8 @@ export const authOptions = {
   ],
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 saat
+    updateAge: 24 * 60 * 60, // Sadece token süresi dolduğunda güncelle
   },
   callbacks: {
     async signIn({ user, account, profile }) {
@@ -95,7 +97,7 @@ export const authOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -104,13 +106,16 @@ export const authOptions = {
         token.isApproved = user.isApproved;
       }
 
-      if ((!token.role || token.isApproved === undefined) && token.id) {
+      // Sadece manuel update trigger'ında veritabanını kontrol et
+      if (trigger === "update" && token.id) {
         try {
           await DBConnect();
           const dbUser = await User.findById(token.id);
           if (dbUser) {
             token.role = dbUser.role;
             token.isApproved = dbUser.isApproved;
+            token.name = dbUser.name;
+            token.email = dbUser.email;
           }
         } catch (error) {
           console.error("JWT callback error:", error);

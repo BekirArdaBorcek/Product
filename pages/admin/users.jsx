@@ -89,6 +89,8 @@ export default function AdminPanel() {
             user._id === userId ? { ...user, role: newRole } : user
           )
         );
+
+        setError("");
       } else {
         setError(data.error || "Rol güncellenirken hata oluştu");
       }
@@ -116,6 +118,8 @@ export default function AdminPanel() {
             user._id === userId ? { ...user, isApproved } : user
           )
         );
+
+        setError("");
       } else {
         setError(data.error || "Onay durumu güncellenirken hata oluştu");
       }

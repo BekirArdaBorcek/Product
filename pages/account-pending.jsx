@@ -1,11 +1,13 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Head from "next/head";
 
 export default function AccountPending() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -15,12 +17,46 @@ export default function AccountPending() {
       return;
     }
 
-    // Eğer kullanıcı admin ise veya onaylı ise ana sayfaya yönlendir
     if (session.user.role === "admin" || session.user.isApproved) {
       router.push("/");
       return;
     }
   }, [session, status, router]);
+
+  // Manuel yetkilendirme kontrolü
+  const checkApprovalStatus = async () => {
+    if (!session) return;
+
+    setCheckingStatus(true);
+    setStatusMessage(null);
+
+    try {
+      // Session'ı yenile
+      await update();
+
+      setStatusMessage({
+        type: "success",
+        message: "Yetki durumunuz kontrol edildi.",
+      });
+
+      // Eğer onaylandıysa ana sayfaya yönlendir
+      setTimeout(() => {
+        if (session.user.isApproved) {
+          router.push("/");
+        } else {
+          // Mesajı temizle
+          setStatusMessage(null);
+        }
+      }, 3000);
+    } catch (error) {
+      setStatusMessage({
+        type: "error",
+        message: "Kontrol sırasında bir hata oluştu.",
+      });
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/" });
@@ -133,27 +169,64 @@ export default function AccountPending() {
             style={{ display: "flex", gap: "15px", justifyContent: "center" }}
           >
             <button
-              onClick={() => window.location.reload()}
+              onClick={checkApprovalStatus}
+              disabled={checkingStatus}
               style={{
                 padding: "12px 24px",
-                backgroundColor: "#007bff",
+                backgroundColor: checkingStatus ? "#6c757d" : "#007bff",
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
-                cursor: "pointer",
+                cursor: checkingStatus ? "not-allowed" : "pointer",
                 fontWeight: "600",
                 fontSize: "0.95rem",
                 transition: "background-color 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = "#0056b3";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = "#007bff";
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                margin: "0 auto",
               }}
             >
-              Durumu Kontrol Et
+              {checkingStatus ? (
+                <>
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      border: "2px solid #ffffff",
+                      borderTop: "2px solid transparent",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                    }}
+                  />
+                  Kontrol Ediliyor...
+                </>
+              ) : (
+                <>🔄 Onay Durumunu Kontrol Et</>
+              )}
             </button>
+
+            {/* Durum Mesajı */}
+            {statusMessage && (
+              <div
+                style={{
+                  marginTop: "15px",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  backgroundColor:
+                    statusMessage.type === "success" ? "#d4edda" : "#f8d7da",
+                  border: `1px solid ${
+                    statusMessage.type === "success" ? "#c3e6cb" : "#f5c6cb"
+                  }`,
+                  color:
+                    statusMessage.type === "success" ? "#155724" : "#721c24",
+                  fontSize: "0.9rem",
+                  textAlign: "center",
+                }}
+              >
+                {statusMessage.message}
+              </div>
+            )}
 
             <button
               onClick={handleSignOut}
@@ -192,6 +265,17 @@ export default function AccountPending() {
             Sorularınız için sistem yöneticisi ile iletişime geçebilirsiniz.
           </p>
         </div>
+
+        <style jsx>{`
+          @keyframes spin {
+            0% {
+              transform: rotate(0deg);
+            }
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
       </div>
     </>
   );

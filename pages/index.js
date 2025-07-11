@@ -1,12 +1,45 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useState } from "react";
 import styles from "@/styles/Main.module.css";
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(null);
 
   if (status === "loading") return <p>Loading...</p>;
+
+  // Manuel yetkilendirme kontrolü
+  const checkApprovalStatus = async () => {
+    if (!session) return;
+
+    setCheckingStatus(true);
+    setStatusMessage(null);
+
+    try {
+      // Session'ı yenile
+      await update();
+
+      setStatusMessage({
+        type: "success",
+        message: "Yetki durumunuz güncellendi!",
+      });
+
+      // Mesajı bir süre sonra temizle
+      setTimeout(() => {
+        setStatusMessage(null);
+      }, 3000);
+    } catch (error) {
+      setStatusMessage({
+        type: "error",
+        message: "Kontrol sırasında bir hata oluştu.",
+      });
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
 
   return (
     <>
@@ -25,55 +58,154 @@ export default function Home() {
             {session ? (
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "15px",
                   padding: "20px",
-                  background: "linear-gradient(135deg, #e8f5e8, #f0f8ff)",
-                  borderRadius: "15px",
-                  border: "1px solid #ddd",
+                  background: "#f8f9fa",
+                  borderRadius: "8px",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  textAlign: "center",
+                  maxWidth: "500px",
+                  margin: "0 auto",
                 }}
               >
-                <p
+                {/* Kullanıcı Profil Alanı */}
+                <div
                   style={{
-                    margin: 0,
-                    fontSize: "1.1rem",
-                    color: "#333",
-                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "15px",
+                    marginBottom: "20px",
                   }}
                 >
-                  Hoş geldiniz, {session.user?.name || session.user?.email}!
-                  {session.user?.role === "admin" && (
-                    <span
+                  <div
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "50%",
+                      background: "#6c757d",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "white",
+                      fontWeight: "bold",
+                      fontSize: "1.2rem",
+                    }}
+                  >
+                    {session.user?.name?.charAt(0) ||
+                      session.user?.email?.charAt(0) ||
+                      "U"}
+                  </div>
+                  <div style={{ textAlign: "left" }}>
+                    <h3
                       style={{
-                        marginLeft: "10px",
-                        padding: "4px 8px",
-                        backgroundColor: "#28a745",
-                        color: "white",
-                        borderRadius: "4px",
-                        fontSize: "0.8rem",
+                        margin: 0,
+                        fontSize: "1.3rem",
+                        fontWeight: "600",
+                        color: "#333",
                       }}
                     >
-                      Admin
-                    </span>
-                  )}
-                  {session.user?.role !== "admin" &&
-                    !session.user?.isApproved && (
-                      <span
-                        style={{
-                          marginLeft: "10px",
-                          padding: "4px 8px",
-                          backgroundColor: "#ffc107",
-                          color: "#212529",
-                          borderRadius: "4px",
-                          fontSize: "0.8rem",
-                        }}
-                      >
-                        Onay Bekliyor
-                      </span>
+                      Hoş geldiniz!
+                    </h3>
+                    <p
+                      style={{
+                        margin: "5px 0 0 0",
+                        fontSize: "1rem",
+                        color: "#666",
+                      }}
+                    >
+                      {session.user?.name || session.user?.email}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Etiketler */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      backgroundColor:
+                        session.user?.role === "admin" ? "#4caf50" : "#ff9800",
+                      color: "white",
+                    }}
+                  >
+                    {session.user?.role === "admin" ? "Admin" : "Kullanıcı"}
+                  </span>
+                  <span
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      backgroundColor: session.user?.isApproved
+                        ? "#4caf50"
+                        : "#f44336",
+                      color: "white",
+                    }}
+                  >
+                    {session.user?.isApproved ? "Onaylı" : "Onay Bekliyor"}
+                  </span>
+                </div>
+
+                {/* Yetkilendirme Kontrol Butonu */}
+                <div style={{ marginTop: "20px", textAlign: "center" }}>
+                  <button
+                    onClick={checkApprovalStatus}
+                    disabled={checkingStatus}
+                    style={{
+                      padding: "12px 24px",
+                      background: checkingStatus ? "#9e9e9e" : "#007bff",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "6px",
+                      cursor: checkingStatus ? "not-allowed" : "pointer",
+                      fontWeight: "600",
+                      fontSize: "0.95rem",
+                    }}
+                  >
+                    {checkingStatus ? (
+                      <>Kontrol Ediliyor...</>
+                    ) : (
+                      <>Yetki Durumunu Kontrol Et</>
                     )}
-                </p>
+                  </button>
+
+                  {/* Durum Mesajı */}
+                  {statusMessage && (
+                    <div
+                      style={{
+                        marginTop: "15px",
+                        padding: "10px 15px",
+                        borderRadius: "6px",
+                        backgroundColor:
+                          statusMessage.type === "success"
+                            ? "#d4edda"
+                            : "#f8d7da",
+                        border: `1px solid ${
+                          statusMessage.type === "success"
+                            ? "#c3e6cb"
+                            : "#f5c6cb"
+                        }`,
+                        color:
+                          statusMessage.type === "success"
+                            ? "#155724"
+                            : "#721c24",
+                        fontSize: "0.9rem",
+                        textAlign: "center",
+                      }}
+                    >
+                      {statusMessage.message}
+                    </div>
+                  )}
+                </div>
 
                 {session.user?.role !== "admin" &&
                   !session.user?.isApproved && (
@@ -105,6 +237,7 @@ export default function Home() {
                     gap: "10px",
                     flexWrap: "wrap",
                     justifyContent: "center",
+                    marginTop: "18px",
                   }}
                 >
                   <button
@@ -280,6 +413,10 @@ export default function Home() {
             )}
           </div>
         )}
+
+        <style jsx>{`
+          /* Basit CSS stilleri */
+        `}</style>
       </div>
     </>
   );
